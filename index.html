@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Currency Duo</title>
+    <link rel="apple-touch-icon" href="image_24.png">
+    <link rel="icon" type="image/png" href="image_24.png">
+    <style>
+        :root {
+            --bg: #fff;
+            --main: #333;
+            --accent: #eee;
+            --radius: 15px;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0; padding: 0;
+            touch-action: manipulation; 
+        }
+
+        body {
+            background-color: var(--bg); color: var(--main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            padding: calc(env(safe-area-inset-top, 20px) + 15px) 15px calc(env(safe-area-inset-bottom, 10px) + 15px) 15px;
+        }
+
+        .fridge-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; }
+        
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+        .subtitle { color: #999; font-size: 0.85rem; font-weight: 500; }
+
+        /* Currency Pair Section */
+        .converter-box { width: 100%; display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px; }
+        
+        .currency-item { 
+            width: 100%; background: #fafafa; border: 1px solid var(--accent); 
+            border-radius: var(--radius); padding: 20px; position: relative;
+        }
+
+        .currency-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        
+        select {
+            background: var(--main); color: #fff; border: none; border-radius: 10px;
+            padding: 5px 12px; font-size: 0.9rem; font-weight: bold; outline: none;
+        }
+
+        input {
+            width: 100%; border: none; background: transparent; color: var(--main);
+            font-size: 2.2rem; font-weight: 800; text-align: right; outline: none;
+            font-family: inherit;
+        }
+
+        .approx-value {
+            font-size: 0.8rem; color: #bbb; text-align: right; font-weight: bold;
+            height: 1rem; margin-top: 4px;
+        }
+
+        .sync-info {
+            font-size: 0.65rem; color: #ccc; font-weight: 800; text-transform: uppercase;
+            margin-top: 10px; letter-spacing: 1px;
+        }
+
+        /* Swap Icon */
+        .swap-divider { width: 40px; height: 40px; background: #fff; border: 1px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin: -30px 0 -30px 0; z-index: 10; cursor: pointer; }
+
+        /* Common Footer Parts */
+        .footer-btns { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: auto; padding: 20px 0; }
+        .kofi-btn, .home-btn {
+            display: inline-flex; align-items: center; padding: 12px 20px;
+            border-radius: var(--radius); font-weight: bold; font-size: 0.85rem; text-decoration: none;
+        }
+        .kofi-btn { background: var(--main); color: #fff; }
+        .home-btn { background: var(--accent); color: var(--main); border: none; cursor: pointer; }
+
+        footer { font-size: 0.7rem; color: #bbb; text-align: center; line-height: 1.6; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 20px; max-width: 320px; width: 90%; position: relative; text-align: left;}
+        .modal-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 1.2rem; font-weight: 800;}
+        .close-icon { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #aaa; cursor: pointer; padding: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="fridge-container">
+    <header>
+        <h1>Currency Duo</h1>
+        <p class="subtitle">Two-way instant conversion.</p>
+    </header>
+
+    <div class="converter-box">
+        <div class="currency-item">
+            <div class="currency-row">
+                <select id="currencyA"></select>
+                <input type="text" id="inputA" placeholder="0" inputmode="decimal">
+            </div>
+            <div class="approx-value" id="roundA"></div>
+        </div>
+
+        <div class="swap-divider" id="swapBtn">⇄</div>
+
+        <div class="currency-item">
+            <div class="currency-row">
+                <select id="currencyB"></select>
+                <input type="text" id="inputB" placeholder="0" inputmode="decimal">
+            </div>
+            <div class="approx-value" id="roundB"></div>
+        </div>
+    </div>
+
+    <div class="sync-info" id="syncStatus">Fetching rates...</div>
+
+    <div class="footer-btns">
+        <a href="https://ko-fi.com/afrorakda" target="_blank" class="kofi-btn">
+            <span>🍵</span> Support me on Ko-fi
+        </a>
+        <button class="home-btn" id="homeBtn">Add to Home Screen</button>
+    </div>
+
+    <footer>
+        No login / No tracking / No ads / Browser only<br>
+        afrorakda © 2026
+    </footer>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close-icon" id="closeModal">&times;</span>
+        <div class="modal-title-row"><span>📱</span><strong>Install</strong></div>
+        <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">Add to your home screen.</p>
+        <div style="font-size: 0.95rem; line-height: 1.5; color: #333;">
+            <p>🍏 <strong>iPhone:</strong> Share > Add to Home Screen</p>
+            <p style="margin-top:10px;">🤖 <strong>Android:</strong> Menu > Add to Home Screen</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const codes = ["USD","EUR","JPY","GBP","AUD","CAD","CHF","CNY","HKD","IDR","INR","KRW","MYR","NZD","PHP","SGD","THB","TWD","VND"];
+    const selA = document.getElementById('currencyA');
+    const selB = document.getElementById('currencyB');
+    const inA = document.getElementById('inputA');
+    const inB = document.getElementById('inputB');
+    const roundA = document.getElementById('roundA');
+    const roundB = document.getElementById('roundB');
+    const status = document.getElementById('syncStatus');
+
+    let rates = JSON.parse(localStorage.getItem('fcombo_rates')) || {};
+    let base = "USD";
+
+    // Initialize Selects
+    codes.forEach(code => {
+        selA.add(new Option(code, code));
+        selB.add(new Option(code, code));
+    });
+
+    // Load Saved Preferences
+    selA.value = localStorage.getItem('fcombo_curA') || 'MYR';
+    selB.value = localStorage.getItem('fcombo_curB') || 'JPY';
+
+    async function fetchRates() {
+        try {
+            const res = await fetch(`https://open.er-api.com/v6/latest/USD`);
+            const data = await res.json();
+            if (data.result === "success") {
+                rates = data.rates;
+                localStorage.setItem('fcombo_rates', JSON.stringify(rates));
+                status.textContent = `Synced: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+            }
+        } catch (e) {
+            status.textContent = rates.USD ? "Using cached rates" : "Sync failed (Offline)";
+        }
+    }
+
+    function format(num) {
+        if (!num || isNaN(num)) return "";
+        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 8 }).format(num).replace(/,/g, '');
+    }
+
+    function displayFormat(num) {
+        if (!num || isNaN(num)) return "";
+        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+    }
+
+    function convert(val, from, to) {
+        if (!rates[from] || !rates[to]) return "";
+        const result = (val / rates[from]) * rates[to];
+        return result;
+    }
+
+    function update(e) {
+        const val = parseFloat(e.target.value.replace(/,/g, ''));
+        if (e.target === inA) {
+            const res = convert(val, selA.value, selB.value);
+            inB.value = displayFormat(res);
+            roundB.textContent = res ? `≈ ${Math.round(res).toLocaleString()}` : "";
+            roundA.textContent = ""; 
+        } else {
+            const res = convert(val, selB.value, selA.value);
+            inA.value = displayFormat(res);
+            roundA.textContent = res ? `≈ ${Math.round(res).toLocaleString()}` : "";
+            roundB.textContent = "";
+        }
+        // Apply comma formatting to self
+        e.target.value = displayFormat(val);
+    }
+
+    inA.oninput = update;
+    inB.oninput = update;
+
+    selA.onchange = () => { localStorage.setItem('fcombo_curA', selA.value); inA.dispatchEvent(new Event('input')); };
+    selB.onchange = () => { localStorage.setItem('fcombo_curB', selB.value); inA.dispatchEvent(new Event('input')); };
+
+    document.getElementById('swapBtn').onclick = () => {
+        const temp = selA.value;
+        selA.value = selB.value;
+        selB.value = temp;
+        localStorage.setItem('fcombo_curA', selA.value);
+        localStorage.setItem('fcombo_curB', selB.value);
+        inA.dispatchEvent(new Event('input'));
+    };
+
+    // Modal
+    document.getElementById('homeBtn').onclick = () => document.getElementById('modal').style.display = 'flex';
+    document.getElementById('closeModal').onclick = () => document.getElementById('modal').style.display = 'none';
+
+    fetchRates().then(() => inA.dispatchEvent(new Event('input')));
+</script>
+
+</body>
+</html>
