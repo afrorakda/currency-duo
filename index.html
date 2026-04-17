@@ -43,7 +43,6 @@
             background: var(--accent); padding: 8px 12px; border-radius: 10px;
         }
 
-        /* Converter Section */
         .converter-box { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 20px; }
         
         .currency-item { 
@@ -55,8 +54,8 @@
         
         select {
             background: var(--main); color: #fff; border: none; border-radius: 10px;
-            padding: 8px 12px; font-size: 0.95rem; font-weight: bold; outline: none;
-            -webkit-appearance: none; cursor: pointer;
+            padding: 8px 12px; font-size: 0.85rem; font-weight: bold; outline: none;
+            -webkit-appearance: none; cursor: pointer; max-width: 220px;
         }
 
         .clr-btn {
@@ -73,7 +72,7 @@
         input::placeholder { color: var(--placeholder); -webkit-text-fill-color: var(--placeholder); }
 
         .approx-value { font-size: 0.85rem; color: #bbb; text-align: right; font-weight: 800; height: 1.2rem; }
-        .sync-info { font-size: 0.65rem; color: #ccc; font-weight: 800; text-transform: uppercase; margin-top: 10px; text-align: center; }
+        .sync-info { font-size: 0.6rem; color: #ccc; font-weight: 800; text-transform: uppercase; margin-top: 10px; text-align: center; letter-spacing: 0.5px; }
 
         .swap-divider { 
             width: 44px; height: 44px; background: #fff; border: 2px solid var(--accent); 
@@ -82,7 +81,6 @@
         }
         .swap-divider:active { transform: scale(0.9) rotate(180deg); background: var(--accent); }
 
-        /* Footer & Buttons */
         .footer-btns { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 0 30px; }
         .kofi-btn, .home-btn {
             width: 100%; max-width: 250px; padding: 14px; border-radius: var(--radius);
@@ -94,7 +92,6 @@
         footer { font-size: 0.75rem; color: #bbb; text-align: center; padding-bottom: 20px; font-weight: 600; line-height: 1.6; }
         footer a { color: inherit; text-decoration: underline; }
 
-        /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #fff; padding: 30px; border-radius: var(--radius); width: 85%; max-width: 320px; position: relative; }
         .close-icon { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; color: #aaa; cursor: pointer; font-weight: bold; }
@@ -130,7 +127,7 @@
         </div>
     </div>
 
-    <div class="sync-info" id="syncStatus">Fetching rates...</div>
+    <div class="sync-info" id="syncStatus">Fetching latest rates...</div>
 
     <div class="footer-btns">
         <a href="https://ko-fi.com/afrorakda" target="_blank" class="kofi-btn">☕️ Buy me a coffee</a>
@@ -148,7 +145,7 @@
     <div class="modal-content">
         <span class="close-icon" id="closeModal">&times;</span>
         <h3 style="margin-top:0; font-weight:800">📱 Install</h3>
-        <p style="margin: 15px 0; color: #666; font-size: 0.9rem;">Add to your home screen for quick access.</p>
+        <p style="margin: 15px 0; color: #666; font-size: 0.9rem;">Add to your home screen for instant use.</p>
         <div style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
             <p>🍏 <b>iPhone (Safari):</b><br>Share > Add to Home Screen</p><br>
             <p>🤖 <b>Android (Chrome):</b><br>Menu (⋮) > Add to home screen</p>
@@ -157,7 +154,15 @@
 </div>
 
 <script>
-    const codes = ["USD","EUR","JPY","GBP","AUD","CAD","CHF","CNY","HKD","IDR","INR","KRW","MYR","NZD","PHP","SGD","THB","TWD","VND"];
+    const currencyData = [
+        {c:"USD", n:"US Dollar"}, {c:"EUR", n:"Euro"}, {c:"JPY", n:"Japanese Yen"}, 
+        {c:"GBP", n:"British Pound"}, {c:"AUD", n:"Australian Dollar"}, {c:"CAD", n:"Canadian Dollar"}, 
+        {c:"CHF", n:"Swiss Franc"}, {c:"CNY", n:"Chinese Yuan"}, {c:"HKD", n:"Hong Kong Dollar"}, 
+        {c:"IDR", n:"Indonesian Rupiah"}, {c:"INR", n:"Indian Rupee"}, {c:"KRW", n:"South Korean Won"}, 
+        {c:"MYR", n:"Malaysian Ringgit"}, {c:"NZD", n:"NZ Dollar"}, {c:"PHP", n:"Philippine Peso"}, 
+        {c:"SGD", n:"Singapore Dollar"}, {c:"THB", n:"Thai Baht"}, {c:"TWD", n:"Taiwan Dollar"}, {c:"VND", n:"Vietnamese Dong"}
+    ];
+
     const selA = document.getElementById('currencyA');
     const selB = document.getElementById('currencyB');
     const inA = document.getElementById('inputA');
@@ -165,9 +170,9 @@
     const status = document.getElementById('syncStatus');
     let rates = JSON.parse(localStorage.getItem('fcombo_rates')) || {};
 
-    codes.forEach(code => {
-        selA.add(new Option(code, code));
-        selB.add(new Option(code, code));
+    currencyData.forEach(item => {
+        selA.add(new Option(`${item.c} - ${item.n}`, item.c));
+        selB.add(new Option(`${item.c} - ${item.n}`, item.c));
     });
 
     selA.value = localStorage.getItem('fcombo_curA') || 'MYR';
@@ -183,7 +188,7 @@
                 status.textContent = `Synced: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
             }
         } catch (e) {
-            status.textContent = rates.USD ? "Using cached rates" : "Sync failed (Offline)";
+            status.textContent = rates.USD ? "Using cached rates" : "Offline mode";
         }
     }
 
@@ -242,7 +247,10 @@
         } catch(e) {}
     }
     window.onload = loadFooter;
-    fetchRates().then(() => { inA.value = "100"; inA.dispatchEvent(new Event('input')); });
+    fetchRates().then(() => { 
+        inA.value = "100"; inA.dispatchEvent(new Event('input')); 
+        inA.focus(); // 開いた瞬間にオートフォーカス
+    });
 </script>
 
 </body>
